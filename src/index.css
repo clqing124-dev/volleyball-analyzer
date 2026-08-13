@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body, #root {
+    @apply h-full w-full overflow-hidden;
+  }
+
+  body {
+    @apply bg-slate-950 text-white;
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .touch-target {
+    @apply min-h-touch min-w-touch flex items-center justify-center active:opacity-70 transition-opacity;
+  }
+}
