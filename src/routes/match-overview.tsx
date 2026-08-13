@@ -126,16 +126,21 @@ export function MatchOverviewPage() {
                     继续记录
                   </button>
                 )}
-                {set.isCompleted && set.rallies && set.rallies.length > 0 && (
-                  <button
-                    onClick={() => navigate(`/match/${match.id}/set/${set.id}/stats`)}
-                    className="flex-1 touch-target bg-slate-700 text-slate-200 rounded-lg py-2.5
-                      active:bg-slate-600 flex items-center justify-center gap-1.5 text-sm font-semibold"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    查看统计
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate(`/match/${match.id}/set/${set.id}`)}
+                  className="flex-1 touch-target bg-slate-700 text-slate-200 rounded-lg py-2.5
+                    active:bg-slate-600 flex items-center justify-center gap-1.5 text-sm font-semibold"
+                >
+                  查看回合
+                </button>
+                <button
+                  onClick={() => navigate(`/match/${match.id}/set/${set.id}/stats`)}
+                  className="flex-1 touch-target bg-slate-700 text-slate-200 rounded-lg py-2.5
+                    active:bg-slate-600 flex items-center justify-center gap-1.5 text-sm font-semibold"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  统计
+                </button>
               </div>
             </div>
           ))}

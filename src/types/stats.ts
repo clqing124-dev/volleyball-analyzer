@@ -1,87 +1,75 @@
 // ============================================================
-// stats.ts — 统计指标输出类型
+// stats.ts — 统计指标输出类型（重构版）
 // ============================================================
 
 export interface ServeStatistics {
   totalServes: number;
-  aces: number;
-  errors: number;
-  opponentInPosition: number;
-  opponentOutOfPosition: number;
-  aceRate: number;
-  servePressureRate: number;
-  errorRate: number;
-  tacticalSuccessRate: number;  // 发到追发人 (己方)
+  scores: number;
+  outOfPosition: number;
+  concedes: number;
+  targetedCount: number;
+  scoreRate: number;            // 发球得分率
+  breakRate: number;            // 发球破攻率
+  errorRate: number;            // 发球失误率
+  efficiencyIndex: number;      // 发球效能指数
+  tacticalSuccessRate: number;  // 战术发球成功率
 }
 
 export interface ReceptionStatistics {
   totalReceptions: number;
   inPosition: number;
-  halfInPosition: number;
-  out: number;
-  inPositionRate: number;
-  outOfPositionRate: number;
+  outOfPosition: number;        // 不到位 + 接到对面
+  concedes: number;
+  inPositionRate: number;       // 一传到位率
+  outOfPositionRate: number;    // 一传不到位率
+  errorRate: number;            // 一传失误率
 }
 
 export interface SetStatistics {
   totalSets: number;
   inPosition: number;
-  half: number;
-  outOfPosition: number;
-  qualityRate: number;
+  qualityRate: number;          // 传球到位率
   distributionByZone: Record<number, number>;
   position4Rate: number;
   position2Rate: number;
   position3Rate: number;
   position6Rate: number;
-  blockFormationRate: number;
+  blockFormationRate: number;   // 一攻拦网形成率
 }
 
 export interface AttackStatistics {
   totalAttacks: number;
   scores: number;
   concedes: number;
-  blockedBack: number;
   opponentHandled: number;
-  opponentCounter: number;
-  scoringRate: number;
-  effectiveAttackRate: number;
-  scoringRateBySetQuality: {
-    inPosition: number;
-    outOfPosition: number;
-  };
-  effectiveRateBySetQuality: {
-    inPosition: number;
-    outOfPosition: number;
-  };
+  // 到位/不到位切分
+  scoringRateBySetQuality: { in: number; out: number };
+  effectiveRateBySetQuality: { in: number; out: number };
+  efficiency: number;           // 进攻效率
+  firstAttackScoreRate: number; // 一攻得分率
+  counterAttackScoreRate: number; // 防反得分率
 }
 
-export interface BlockDefenseStatistics {
-  totalBlockDefenses: number;
+export interface BlockDefenseTransitionStatistics {
+  totalBlocks: number;          // 去掉 blockEffect=none 后的拦网总数
   blockKills: number;
   effectiveTouches: number;
-  destructiveBlocks: number;
-  noBlockTouches: number;
-  effectiveBlockRate: number;
-  destructiveBlockRate: number;
-  noBlockRate: number;
-  inPositionDefense: number;
-  outOfPositionDefense: number;
-  notDug: number;
-  noDefenseTouch: number;
-  effectiveDefenseRate: number;
-}
-
-export interface TransitionStatistics {
-  totalTransitions: number;
-  successfulBlockProtection: number;
-  failedBlockProtection: number;
-  notAttemptedBlockProtection: number;
-  blockProtectionSuccessRate: number;
-  inPositionSecondTouch: number;
-  halfSecondTouch: number;
-  outOfPositionSecondTouch: number;
-  secondTouchQualityRate: number;
+  destructive: number;
+  noEffectiveTouch: number;
+  effectiveBlockRate: number;   // 有效拦网率
+  destructiveBlockRate: number; // 破坏性拦网率
+  noBlockRate: number;          // 未形成拦网率
+  // 第一次触球
+  totalFirstTouch: number;
+  firstTouchEffectiveRate: number; // 第一次触球有效率
+  firstTouchInRate: number;        // 第一次触球到位率
+  // 第二次触球（不含得分/丢分）
+  totalSecondTouch: number;
+  secondTouchInRate: number;       // 第二次触球到位率（到位+半到位）
+  secondTouchDistribution: Record<number, number>; // 传1/2/3/4/6号位
+  secondTouchPosRates: Record<number, number>;
+  // 非一攻拦网形成率
+  counterBlockFormationRate: number;
 }
 
 export interface MatchStatistics {
@@ -89,8 +77,7 @@ export interface MatchStatistics {
   reception: ReceptionStatistics;
   set: SetStatistics;
   attack: AttackStatistics;
-  blockDefense: BlockDefenseStatistics;
-  transition: TransitionStatistics | null;
+  blockDefenseTransition: BlockDefenseTransitionStatistics;
   totalRallies: number;
   totalPointsScored: number;
   totalPointsConceded: number;
@@ -99,5 +86,5 @@ export interface MatchStatistics {
 
 export interface StatFilters {
   playerNumber?: number;
-  minReceptionQuality?: 0 | 0.5 | 1;
+  minReceptionQuality?: 'in' | 'half' | 'out';
 }
