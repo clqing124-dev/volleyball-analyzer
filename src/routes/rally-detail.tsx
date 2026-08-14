@@ -102,25 +102,25 @@ function EditReception({ a, onChange, players }: { a: ReceptionAction; onChange:
   );
 }
 
-function EditSet({ a, onChange, players }: { a: SetAction; onChange: (a: SetAction) => void; players: number[] }) {
+function EditSet({ a, onChange }: { a: SetAction; onChange: (a: SetAction) => void }) {
   return (
     <div>
       <EditLabel>传给几号位</EditLabel>
       <EditZones value={a.positionTo} onChange={(z) => onChange({ ...a, positionTo: z })} />
-      <EditLabel>进攻球员</EditLabel>
-      <EditNumbers value={a.attackerNumber} onChange={(n) => onChange({ ...a, attackerNumber: n })} players={players} />
       <EditLabel>是否到位</EditLabel>
       <EditChips options={Object.entries(SET_QUALITY_LABELS).map(([v, label]) => ({ v: v as any, label }))} value={a.quality} onChange={(v) => onChange({ ...a, quality: v })} />
     </div>
   );
 }
 
-function EditAttack({ a, onChange }: { a: AttackAction; onChange: (a: AttackAction) => void }) {
+function EditAttack({ a, onChange, players }: { a: AttackAction; onChange: (a: AttackAction) => void; players: number[] }) {
   return (
     <div>
       <EditLabel>传球是否到位</EditLabel>
       <EditChips options={Object.entries(TOUCH_QUALITY_LABELS).filter(([v]) => ['in', 'half', 'out'].includes(v)).map(([v, label]) => ({ v: v as any, label }))} value={a.setQuality} onChange={(v) => onChange({ ...a, setQuality: v })} />
-      <EditLabel>对方拦网</EditLabel>
+      <EditLabel>进攻球员号码</EditLabel>
+      <EditNumbers value={a.attackerNumber} onChange={(n) => onChange({ ...a, attackerNumber: n })} players={players} />
+      <EditLabel>对方并拦</EditLabel>
       <EditChips options={[{ v: 'formed', label: '形成' }, { v: 'not_formed', label: '未形成' }]} value={a.opponentBlock} onChange={(v) => onChange({ ...a, opponentBlock: v })} columns={2} />
       <EditLabel>进攻方式</EditLabel>
       <EditChips options={Object.entries(ATTACK_TYPE_LABELS).map(([v, label]) => ({ v: v as any, label }))} value={a.attackType} onChange={(v) => onChange({ ...a, attackType: v })} />
@@ -135,10 +135,18 @@ function EditAttack({ a, onChange }: { a: AttackAction; onChange: (a: AttackActi
 function EditBDT({ a, onChange, players }: { a: BlockDefenseTransitionAction; onChange: (a: BlockDefenseTransitionAction) => void; players: number[] }) {
   return (
     <div>
+      <EditLabel>对方进攻位置</EditLabel>
+      <EditZones value={a.opponentAttackPosition} onChange={(z) => onChange({ ...a, opponentAttackPosition: z })} />
       <EditLabel>拦网效果</EditLabel>
       <EditChips options={Object.entries(BLOCK_EFFECT_LABELS).map(([v, label]) => ({ v: v as any, label }))} value={a.blockEffect} onChange={(v) => onChange({ ...a, blockEffect: v })} columns={2} />
+      <EditLabel>对方进攻落点</EditLabel>
+      <EditZones value={a.opponentAttackLanding} onChange={(z) => onChange({ ...a, opponentAttackLanding: z })} />
+      <EditLabel>第一次触球球员</EditLabel>
+      <EditNumbers value={a.firstTouchPlayer} onChange={(n) => onChange({ ...a, firstTouchPlayer: n })} players={players} />
       <EditLabel>第一次触球效果</EditLabel>
       <EditChips options={Object.entries(TOUCH_QUALITY_LABELS).map(([v, label]) => ({ v: v as any, label }))} value={a.firstTouch} onChange={(v) => onChange({ ...a, firstTouch: v })} />
+      <EditLabel>第二次触球球员</EditLabel>
+      <EditNumbers value={a.secondTouchPlayer} onChange={(n) => onChange({ ...a, secondTouchPlayer: n })} players={players} />
       <EditLabel>第二次触球效果</EditLabel>
       <EditChips options={Object.entries(TOUCH_QUALITY_LABELS).map(([v, label]) => ({ v: v as any, label }))} value={a.secondTouch} onChange={(v) => onChange({ ...a, secondTouch: v })} />
       <EditLabel>第三次触球位置</EditLabel>
@@ -160,8 +168,8 @@ function EditForm({ action, players, onSave, onCancel }: {
     <div className="mt-3 p-3 bg-slate-900/60 rounded-lg">
       {draft.type === 'serve' && <EditServe a={draft as ServeAction} onChange={(a) => setDraft(a)} players={players} />}
       {draft.type === 'reception' && <EditReception a={draft as ReceptionAction} onChange={(a) => setDraft(a)} players={players} />}
-      {draft.type === 'set' && <EditSet a={draft as SetAction} onChange={(a) => setDraft(a)} players={players} />}
-      {draft.type === 'attack' && <EditAttack a={draft as AttackAction} onChange={(a) => setDraft(a)} />}
+      {draft.type === 'set' && <EditSet a={draft as SetAction} onChange={(a) => setDraft(a)} />}
+      {draft.type === 'attack' && <EditAttack a={draft as AttackAction} onChange={(a) => setDraft(a)} players={players} />}
       {draft.type === 'block_defense_transition' && <EditBDT a={draft as BlockDefenseTransitionAction} onChange={(a) => setDraft(a)} players={players} />}
       <div className="flex gap-2 mt-3">
         <button onClick={() => onSave(draft)} className="flex-1 touch-target bg-emerald-600 text-white rounded-lg py-2 text-sm font-semibold active:bg-emerald-700">

@@ -1,5 +1,5 @@
 // ============================================================
-// action-format.ts — 动作的展示与格式化
+// action-format.ts — 动作的展示与格式化（v2）
 // ============================================================
 
 import type { RallyAction } from '@/types/actions';
@@ -36,14 +36,14 @@ export function formatAction(a: RallyAction): { title: string; fields: Field[] }
     case 'set':
       title = '二传（一攻）';
       raw.push(['传给几号位', a.positionTo ? `${a.positionTo}号位` : '未记录']);
-      raw.push(['进攻球员', a.attackerNumber ? `${a.attackerNumber}号` : '未记录']);
       raw.push(['是否到位', SET_QUALITY_LABELS[a.quality]]);
       break;
 
     case 'attack':
       title = `进攻（第${a.attackNumber}次）`;
       raw.push(['传球是否到位', a.setQuality ? TOUCH_QUALITY_LABELS[a.setQuality] : '未记录']);
-      raw.push(['对方拦网', a.opponentBlock === 'formed' ? '形成' : a.opponentBlock === 'not_formed' ? '未形成' : '未记录']);
+      raw.push(['进攻球员', a.attackerNumber ? `${a.attackerNumber}号` : '未记录']);
+      raw.push(['对方并拦', a.opponentBlock === 'formed' ? '形成' : a.opponentBlock === 'not_formed' ? '未形成' : '未记录']);
       raw.push(['进攻方式', a.attackType ? ATTACK_TYPE_LABELS[a.attackType] : '未记录']);
       raw.push(['进攻线路', a.attackLine ? ATTACK_LINE_LABELS[a.attackLine] : '未记录']);
       raw.push(['进攻结果', ATTACK_RESULT_LABELS[a.result]]);
@@ -51,8 +51,12 @@ export function formatAction(a: RallyAction): { title: string; fields: Field[] }
 
     case 'block_defense_transition':
       title = '拦防串联';
+      raw.push(['对方进攻位置', a.opponentAttackPosition ? `${a.opponentAttackPosition}号位` : '未记录']);
       raw.push(['拦网效果', a.blockEffect ? BLOCK_EFFECT_LABELS[a.blockEffect] : '未记录']);
+      raw.push(['对方进攻落点', a.opponentAttackLanding ? `${a.opponentAttackLanding}号位` : '未记录']);
+      raw.push(['第一次触球球员', a.firstTouchPlayer ? `${a.firstTouchPlayer}号` : '未记录']);
       raw.push(['第一次触球', a.firstTouch ? TOUCH_QUALITY_LABELS[a.firstTouch] : '未记录']);
+      raw.push(['第二次触球球员', a.secondTouchPlayer ? `${a.secondTouchPlayer}号` : '未记录']);
       raw.push(['第二次触球', a.secondTouch ? TOUCH_QUALITY_LABELS[a.secondTouch] : '未记录']);
       raw.push(['第三次触球位置', a.thirdTouchPosition ? `${a.thirdTouchPosition}号位` : '未记录']);
       raw.push(['第三次触球球员', a.thirdTouchPlayer ? `${a.thirdTouchPlayer}号` : '未记录']);

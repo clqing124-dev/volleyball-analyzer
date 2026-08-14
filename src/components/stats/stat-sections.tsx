@@ -43,8 +43,8 @@ export function ReceptionSection({ stats }: { stats: MatchStatistics }) {
       <div className="grid grid-cols-2 gap-2">
         <StatCard label="一传总数" value={String(r.totalReceptions)} />
         <StatCard label="一传到位率" value={pct(r.inPositionRate)} unit="%" sub={`${r.inPosition}球`} />
-        <StatCard label="一传不到位率" value={pct(r.outOfPositionRate)} unit="%" sub={`不到位+接过去 ${r.outOfPosition}球`} />
-        <StatCard label="一传失误率" value={pct(r.errorRate)} unit="%" sub={`丢分${r.concedes}球`} />
+        <StatCard label="一传不到位率" value={pct(r.outOfPositionRate)} unit="%" sub={`不到位${r.outOfPosition}球`} />
+        <StatCard label="一传失误率" value={pct(r.errorRate)} unit="%" sub={`丢分${r.concedes}+接过去${r.toOpponent}球`} />
       </div>
     </div>
   );
@@ -100,7 +100,7 @@ export function BlockDefenseTransitionSection({ stats }: { stats: MatchStatistic
         <StatCard label="拦网总数" value={String(b.totalBlocks)} />
         <StatCard label="有效拦网率" value={pct(b.effectiveBlockRate)} unit="%" sub={`拦死${b.blockKills}+撑起${b.effectiveTouches}`} />
         <StatCard label="破坏性拦网率" value={pct(b.destructiveBlockRate)} unit="%" />
-        <StatCard label="未形成拦网率" value={pct(b.noBlockRate)} unit="%" />
+        <StatCard label="未形成并拦率" value={pct(b.noBlockRate)} unit="%" />
       </div>
       <h4 className="text-sm font-semibold text-slate-400 mt-3">第一次触球</h4>
       <div className="grid grid-cols-2 gap-2">

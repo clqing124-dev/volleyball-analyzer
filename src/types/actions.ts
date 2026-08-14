@@ -1,6 +1,6 @@
 // ============================================================
 // actions.ts — 回合动作的区分联合类型 (Discriminated Union)
-// 重构版：统一单一记录对象，拦防串联合并拦防+串联
+// v2：拦防串联扩充字段，进攻独立记录进攻球员，结果拆分
 // ============================================================
 
 // ---- 基础 ----
@@ -18,31 +18,34 @@ export interface BaseAction {
 export type ServeType = 'jump' | 'float';
 export type CourtZone = 1 | 2 | 3 | 4 | 5 | 6;
 
-export type ServeResult = 'in_position' | 'out_of_position' | 'score' | 'concede';
-// 对方到位 / 对方不到位 / 得分 / 丢分
+export type ServeResult = 'in_position' | 'half_in_position' | 'out_of_position' | 'score' | 'concede';
+// 对方到位 / 对方半到位 / 对方不到位 / 得分 / 丢分
 
-export type ReceptionQuality = 'out' | 'half' | 'in' | 'to_opponent' | 'concede' | 'score';
-// 不到位 / 半到位 / 到位 / 接到对面 / 丢分 / 得分
+export type ReceptionQuality = 'in' | 'half' | 'out' | 'concede' | 'opponent_error' | 'direct_score' | 'to_opponent';
+// 到位 / 半到位 / 不到位 / 丢分 / 对方失误 / 直接得分 / 接到对面
 
 export type SetQuality = 'in' | 'half' | 'out' | 'concede' | 'score';
 // 到位 / 半到位 / 不到位 / 丢分 / 得分
 
-export type TouchQuality = 'in' | 'half' | 'out' | 'concede' | 'score';
-// 到位 / 半到位 / 不到位 / 丢分 / 得分（用于第一次/第二次触球）
+export type TouchQuality = 'in' | 'half' | 'out' | 'concede' | 'score' | 'over_net';
+// 到位 / 半到位 / 不到位 / 丢分 / 得分 / 过网
 
-export type AttackType = 'attack' | 'tip' | 'handle';
-// 进攻 / 吊球 / 处理
+export type AttackType = 'attack' | 'tip' | 'handle' | 'recover';
+// 进攻 / 吊球 / 处理 / 回收
 
 export type AttackLine = 'middle' | 'cross' | 'big_cross' | 'small_cross' | 'second_straight' | 'straight';
 // 中线 / 大斜线 / 二直线 / 小斜线 / 腰线 / 直线
 
 export type OpponentBlock = 'formed' | 'not_formed';
 
-export type AttackResult = 'score' | 'concede' | 'blocked_back' | 'opponent_handled' | 'opponent_counter';
-// 得分 / 丢分 / 拦回 / 对方处理 / 对方形成反击
+export type AttackResult = 'error' | 'blocked_kill' | 'score' | 'blocked_back' | 'opponent_handled' | 'opponent_counter';
+// 失误 / 被拦死 / 得分 / 拦回 / 对方处理 / 对方形成反击
+// 失误、被拦死 均视为丢分
 
-export type BlockEffect = 'block_kill' | 'effective_touch' | 'destructive' | 'no_effective_touch' | 'block_out' | 'none';
-// 拦死 / 有效撑起 / 破坏性拦网 / 未有效触球 / 打手出界 / 无(进攻拦回)
+export type BlockEffect =
+  | 'block_kill' | 'effective_touch' | 'destructive' | 'no_effective_touch'
+  | 'no_block_formed' | 'block_out' | 'net_touch' | 'none';
+// 拦死 / 有效撑起 / 破坏性拦网 / 未有效触球 / 未形成并拦 / 打手出界 / 触网 / 无(进攻拦回/处理)
 
 export type TransitionResult = 'form_attack' | 'handle' | 'score' | 'concede';
 // 形成进攻 / 处理 / 得分 / 丢分
@@ -55,7 +58,7 @@ export interface ServeAction extends BaseAction {
   playerNumber?: number;
   serveType: ServeType;
   landingZone?: CourtZone;
-  targetedPlayer?: boolean;          // 是否发到追发人（可跳过）
+  targetedPlayer?: boolean;
   result: ServeResult;
 }
 
@@ -63,23 +66,23 @@ export interface ServeAction extends BaseAction {
 export interface ReceptionAction extends BaseAction {
   type: 'reception';
   playerNumber?: number;
-  position?: CourtZone;              // 接球位置
+  position?: CourtZone;
   quality: ReceptionQuality;
 }
 
-/** 二传（仅一攻） */
+/** 二传（仅一攻，不含进攻球员号） */
 export interface SetAction extends BaseAction {
   type: 'set';
   positionTo?: CourtZone;
-  attackerNumber?: number;
   quality: SetQuality;
 }
 
 /** 进攻 */
 export interface AttackAction extends BaseAction {
   type: 'attack';
-  attackNumber: number;              // 回合内第几次进攻
-  setQuality?: TouchQuality;         // 传球是否到位
+  attackNumber: number;
+  setQuality?: TouchQuality;
+  attackerNumber?: number;
   opponentBlock?: OpponentBlock;
   attackType?: AttackType;
   attackLine?: AttackLine;
@@ -89,11 +92,15 @@ export interface AttackAction extends BaseAction {
 /** 拦防串联（合并拦防+串联） */
 export interface BlockDefenseTransitionAction extends BaseAction {
   type: 'block_defense_transition';
+  opponentAttackPosition?: CourtZone;  // 对方进攻位置
   blockEffect?: BlockEffect;
-  firstTouch?: TouchQuality;         // 第一次触球效果
-  secondTouch?: TouchQuality;        // 第二次触球效果
-  thirdTouchPosition?: CourtZone;    // 第三次触球位置
-  thirdTouchPlayer?: number;         // 第三次触球球员号码
+  opponentAttackLanding?: CourtZone;   // 对方进攻落点
+  firstTouchPlayer?: number;           // 第一次触球球员号
+  firstTouch?: TouchQuality;           // 第一次触球效果
+  secondTouchPlayer?: number;          // 第二次触球球员号
+  secondTouch?: TouchQuality;          // 第二次触球效果
+  thirdTouchPosition?: CourtZone;
+  thirdTouchPlayer?: number;
   result: TransitionResult;
 }
 
@@ -119,18 +126,20 @@ export const COURT_ZONE_LABELS: Record<CourtZone, string> = {
 
 export const SERVE_RESULT_LABELS: Record<ServeResult, string> = {
   in_position: '对方到位',
+  half_in_position: '对方半到位',
   out_of_position: '对方不到位',
   score: '得分',
   concede: '丢分',
 };
 
 export const RECEPTION_QUALITY_LABELS: Record<ReceptionQuality, string> = {
-  out: '不到位',
-  half: '半到位',
   in: '到位',
-  to_opponent: '接到对面',
+  half: '半到位',
+  out: '不到位',
   concede: '丢分',
-  score: '得分',
+  opponent_error: '对方失误',
+  direct_score: '直接得分',
+  to_opponent: '接到对面',
 };
 
 export const SET_QUALITY_LABELS: Record<SetQuality, string> = {
@@ -147,12 +156,14 @@ export const TOUCH_QUALITY_LABELS: Record<TouchQuality, string> = {
   out: '不到位',
   concede: '丢分',
   score: '得分',
+  over_net: '过网',
 };
 
 export const ATTACK_TYPE_LABELS: Record<AttackType, string> = {
   attack: '进攻',
   tip: '吊球',
   handle: '处理',
+  recover: '回收',
 };
 
 export const ATTACK_LINE_LABELS: Record<AttackLine, string> = {
@@ -165,8 +176,9 @@ export const ATTACK_LINE_LABELS: Record<AttackLine, string> = {
 };
 
 export const ATTACK_RESULT_LABELS: Record<AttackResult, string> = {
+  error: '失误',
+  blocked_kill: '被拦死',
   score: '得分',
-  concede: '丢分',
   blocked_back: '拦回',
   opponent_handled: '对方处理',
   opponent_counter: '对方形成反击',
@@ -177,8 +189,10 @@ export const BLOCK_EFFECT_LABELS: Record<BlockEffect, string> = {
   effective_touch: '有效撑起',
   destructive: '破坏性拦网',
   no_effective_touch: '未有效触球',
+  no_block_formed: '未形成并拦',
   block_out: '打手出界',
-  none: '无（进攻拦回）',
+  net_touch: '触网',
+  none: '无（进攻拦回/处理）',
 };
 
 export const TRANSITION_RESULT_LABELS: Record<TransitionResult, string> = {
@@ -195,7 +209,7 @@ export function isServeTerminal(result: ServeResult): boolean {
 }
 
 export function isReceptionTerminal(quality: ReceptionQuality): boolean {
-  return quality === 'score' || quality === 'concede';
+  return quality === 'concede' || quality === 'opponent_error' || quality === 'direct_score';
 }
 
 export function isSetTerminal(quality: SetQuality): boolean {
@@ -203,13 +217,9 @@ export function isSetTerminal(quality: SetQuality): boolean {
 }
 
 export function isAttackTerminal(result: AttackResult): boolean {
-  return result === 'score' || result === 'concede';
+  return result === 'score' || result === 'error' || result === 'blocked_kill';
 }
 
 export function isTransitionTerminal(result: TransitionResult): boolean {
   return result === 'score' || result === 'concede';
-}
-
-export function outcomeFromResult(isScore: boolean): 'our_score' | 'their_score' {
-  return isScore ? 'our_score' : 'their_score';
 }

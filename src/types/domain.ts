@@ -39,6 +39,11 @@ export interface SetData {
 export type RallySide = 'serving' | 'receiving';
 export type RallyOutcome = 'our_score' | 'their_score';
 
+export interface Substitution {
+  playerIn: number;   // 换上球员号
+  playerOut: number;  // 换下球员号
+}
+
 export interface Rally {
   id: string;
   setId: string;
@@ -49,6 +54,8 @@ export interface Rally {
   outcome: RallyOutcome;
   homeScoreAfter: number;       // 此回合后的我方得分
   awayScoreAfter: number;       // 此回合后的对方得分
+  timeout: boolean;             // 该分后是否出现暂停
+  substitutions: Substitution[]; // 该分后是否出现换人
   timestamp: number;
 }
 

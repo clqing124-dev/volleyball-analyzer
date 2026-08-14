@@ -18,11 +18,12 @@ export interface ServeStatistics {
 export interface ReceptionStatistics {
   totalReceptions: number;
   inPosition: number;
-  outOfPosition: number;        // 不到位 + 接到对面
+  outOfPosition: number;        // 不到位
+  toOpponent: number;           // 接到对面
   concedes: number;
   inPositionRate: number;       // 一传到位率
   outOfPositionRate: number;    // 一传不到位率
-  errorRate: number;            // 一传失误率
+  errorRate: number;            // 一传失误率（丢分+接到对面）
 }
 
 export interface SetStatistics {

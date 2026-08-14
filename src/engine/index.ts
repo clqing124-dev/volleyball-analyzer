@@ -53,9 +53,10 @@ function filterActionsByPlayer(actions: RallyAction[], playerNumber?: number): R
     switch (a.type) {
       case 'serve': return a.playerNumber === playerNumber;
       case 'reception': return a.playerNumber === playerNumber;
-      case 'set': return a.attackerNumber === playerNumber;
-      case 'attack': return true; // 进攻无直接球员号，保留
-      case 'block_defense_transition': return a.thirdTouchPlayer === playerNumber;
+      case 'set': return true; // 二传无球员号，保留
+      case 'attack': return a.attackerNumber === playerNumber;
+      case 'block_defense_transition':
+        return a.firstTouchPlayer === playerNumber || a.secondTouchPlayer === playerNumber || a.thirdTouchPlayer === playerNumber;
       default: return true;
     }
   });
@@ -95,7 +96,7 @@ export function computeServeStats(actions: RallyAction[]): ServeStatistics {
 }
 
 function emptyReception(): ReceptionStatistics {
-  return { totalReceptions: 0, inPosition: 0, outOfPosition: 0, concedes: 0,
+  return { totalReceptions: 0, inPosition: 0, outOfPosition: 0, toOpponent: 0, concedes: 0,
     inPositionRate: 0, outOfPositionRate: 0, errorRate: 0 };
 }
 
@@ -105,17 +106,19 @@ export function computeReceptionStats(actions: RallyAction[]): ReceptionStatisti
   if (total === 0) return emptyReception();
 
   const inPosition = recs.filter((r) => r.quality === 'in').length;
-  const outOfPosition = recs.filter((r) => r.quality === 'out' || r.quality === 'to_opponent').length;
+  const outOfPosition = recs.filter((r) => r.quality === 'out').length;
+  const toOpponent = recs.filter((r) => r.quality === 'to_opponent').length;
   const concedes = recs.filter((r) => r.quality === 'concede').length;
 
   return {
     totalReceptions: total,
     inPosition,
     outOfPosition,
+    toOpponent,
     concedes,
     inPositionRate: safeRate(inPosition, total),
     outOfPositionRate: safeRate(outOfPosition, total),
-    errorRate: safeRate(concedes, total),
+    errorRate: safeRate(concedes + toOpponent, total),
   };
 }
 
@@ -168,7 +171,7 @@ export function computeAttackStats(actions: RallyAction[]): AttackStatistics {
   if (total === 0) return emptyAttack();
 
   const scores = attacks.filter((a) => a.result === 'score').length;
-  const concedes = attacks.filter((a) => a.result === 'concede').length;
+  const concedes = attacks.filter((a) => a.result === 'error' || a.result === 'blocked_kill').length;
   const handled = attacks.filter((a) => a.result === 'opponent_handled').length;
 
   // 到位/不到位切分
@@ -224,7 +227,7 @@ export function computeBlockDefenseTransitionStats(actions: RallyAction[]): Bloc
   const blockKills = blocks.filter((b) => b.blockEffect === 'block_kill').length;
   const effectiveTouches = blocks.filter((b) => b.blockEffect === 'effective_touch').length;
   const destructive = blocks.filter((b) => b.blockEffect === 'destructive').length;
-  const noEffective = blocks.filter((b) => b.blockEffect === 'no_effective_touch').length;
+  const noEffective = blocks.filter((b) => b.blockEffect === 'no_block_formed').length;
 
   // 第一次触球
   const firstTouches = bdts.filter((b) => b.firstTouch !== undefined);
