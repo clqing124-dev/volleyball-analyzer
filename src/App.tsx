@@ -20,7 +20,13 @@ export default function App() {
           style: { fontSize: '14px' },
         }}
       />
-      <div className="h-full w-full max-w-lg mx-auto flex flex-col bg-slate-950">
+      <div
+        className="h-full w-full max-w-lg mx-auto flex flex-col bg-slate-950"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/match/new" element={<NewMatchPage />} />

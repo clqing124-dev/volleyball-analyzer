@@ -515,6 +515,8 @@ export function SetRecordingPage() {
   const { getMatch } = useMatchStore();
   const store = useRecordingStore();
   const [match, setMatch] = useState<any>(null);
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
 
   useEffect(() => {
     if (!matchId || !setId) return;
@@ -586,11 +588,28 @@ export function SetRecordingPage() {
     }
   };
 
-  const handleExit = async () => {
-    if (pendingActions.length > 0 && !confirm('当前回合未完成，确定退出吗？')) return;
-    await store.persistScore();
+  const handleExit = () => {
+    // 有未完成的回合时，需要二次点击确认
+    if (pendingActions.length > 0 && !confirmExit) {
+      setConfirmExit(true);
+      setTimeout(() => setConfirmExit(false), 3000);
+      return;
+    }
+    setConfirmExit(false);
+    store.persistScore();
     store.reset();
     navigate(`/match/${matchId}`);
+  };
+
+  const handleEndSet = async () => {
+    if (!confirmEnd) {
+      setConfirmEnd(true);
+      setTimeout(() => setConfirmEnd(false), 3000);
+      return;
+    }
+    setConfirmEnd(false);
+    await store.finishSet(setId!);
+    navigate(`/match/${matchId}/set/${setId}/stats`);
   };
 
   return (
@@ -599,6 +618,7 @@ export function SetRecordingPage() {
       <div className="px-4 pt-4 pb-2 flex items-center gap-3 border-b border-slate-800">
         <button onClick={handleExit} className="touch-target p-2">
           <ArrowLeft className="w-6 h-6" />
+          {confirmExit && <span className="ml-1 text-xs text-red-400 font-semibold">确认退出?</span>}
         </button>
         <div className="flex-1 text-center">
           <div className="flex items-center justify-center gap-2 text-xs text-slate-400 mb-0.5">
@@ -639,13 +659,8 @@ export function SetRecordingPage() {
         <button onClick={() => store.cancelRally()} className="touch-target flex-1 text-red-400 text-sm py-2 active:text-red-300 flex items-center justify-center gap-1">
           取消本回合
         </button>
-        <button onClick={async () => {
-          if (confirm('确定结束这一局吗？')) {
-            await store.finishSet(setId!);
-            navigate(`/match/${matchId}/set/${setId}/stats`);
-          }
-        }} className="touch-target flex-1 text-amber-400 text-sm py-2 active:text-amber-300 flex items-center justify-center gap-1">
-          <Flag className="w-4 h-4" />结束本局
+        <button onClick={handleEndSet} className={`touch-target flex-1 text-sm py-2 flex items-center justify-center gap-1 ${confirmEnd ? 'text-red-400 font-bold' : 'text-amber-400 active:text-amber-300'}`}>
+          <Flag className="w-4 h-4" />{confirmEnd ? '再点一次确认结束' : '结束本局'}
         </button>
       </div>
     </div>

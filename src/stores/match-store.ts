@@ -71,9 +71,9 @@ export const useMatchStore = create<MatchStore>((set, get) => ({
     };
 
     await db.matches.add(match);
-    // 保存球员到独立表（带 matchId）
-    for (const player of players) {
-      await db.players.add(player);
+    // 批量保存球员（带 matchId），比串行更快
+    if (players.length > 0) {
+      await db.players.bulkAdd(players);
     }
 
     set((state) => ({ matches: [match, ...state.matches] }));
