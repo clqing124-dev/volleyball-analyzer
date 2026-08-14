@@ -22,7 +22,9 @@ export function SetStatsPage() {
   const [rallies, setRallies] = useState<Rally[]>([]);
   const [stats, setStats] = useState<MatchStatistics | null>(null);
   const [filterPlayer, setFilterPlayer] = useState<number | undefined>();
-  const [filterQuality, setFilterQuality] = useState<'in' | 'half' | 'out' | undefined>();
+  const [filterSide, setFilterSide] = useState<'serving' | 'receiving' | undefined>();
+  const [rallyFrom, setRallyFrom] = useState<number | undefined>();
+  const [rallyTo, setRallyTo] = useState<number | undefined>();
   const [activeTab, setActiveTab] = useState<string>('serve');
 
   useEffect(() => {
@@ -35,10 +37,12 @@ export function SetStatsPage() {
     if (rallies.length > 0 && match) {
       const filters: StatFilters = {};
       if (filterPlayer) filters.playerNumber = filterPlayer;
-      if (filterQuality) filters.minReceptionQuality = filterQuality;
+      if (filterSide) filters.side = filterSide;
+      if (rallyFrom !== undefined) filters.rallyNumberFrom = rallyFrom;
+      if (rallyTo !== undefined) filters.rallyNumberTo = rallyTo;
       setStats(computeMatchStatistics(rallies, match.type, filters));
     }
-  }, [rallies, match, filterPlayer, filterQuality]);
+  }, [rallies, match, filterPlayer, filterSide, rallyFrom, rallyTo]);
 
   if (!match || !stats) {
     return <div className="flex items-center justify-center h-full text-slate-400">加载中...</div>;
@@ -62,7 +66,7 @@ export function SetStatsPage() {
         </div>
       </div>
 
-      <div className="px-4 py-2 flex gap-2 items-center">
+      <div className="px-4 py-2 flex gap-2 items-center flex-wrap">
         {match.players?.length > 0 && (
           <select value={filterPlayer || ''} onChange={(e) => setFilterPlayer(e.target.value ? Number(e.target.value) : undefined)}
             className="bg-slate-800 rounded-lg px-3 py-2 text-sm text-white outline-none">
@@ -72,13 +76,23 @@ export function SetStatsPage() {
             ))}
           </select>
         )}
-        <select value={filterQuality || ''} onChange={(e) => setFilterQuality((e.target.value || undefined) as any)}
+        <select value={filterSide || ''} onChange={(e) => setFilterSide((e.target.value || undefined) as any)}
           className="bg-slate-800 rounded-lg px-3 py-2 text-sm text-white outline-none">
-          <option value="">全部一传</option>
-          <option value="in">一传到位</option>
-          <option value="half">一传半到位及以上</option>
-          <option value="out">全部</option>
+          <option value="">接球/发球</option>
+          <option value="serving">发球方</option>
+          <option value="receiving">接球方</option>
         </select>
+        <div className="flex items-center gap-1 text-sm">
+          <span className="text-slate-400">第</span>
+          <input type="number" min={1} value={rallyFrom ?? ''} placeholder="起"
+            onChange={(e) => setRallyFrom(e.target.value ? Number(e.target.value) : undefined)}
+            className="w-14 bg-slate-800 rounded-lg px-2 py-2 text-sm text-white outline-none" />
+          <span className="text-slate-400">-</span>
+          <input type="number" min={1} value={rallyTo ?? ''} placeholder="止"
+            onChange={(e) => setRallyTo(e.target.value ? Number(e.target.value) : undefined)}
+            className="w-14 bg-slate-800 rounded-lg px-2 py-2 text-sm text-white outline-none" />
+          <span className="text-slate-400">分</span>
+        </div>
       </div>
 
       <div className="px-4 flex gap-1 overflow-x-auto border-b border-slate-800">

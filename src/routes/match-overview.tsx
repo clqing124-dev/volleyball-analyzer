@@ -4,15 +4,17 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Play, Plus, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Play, Plus, BarChart3, Trash2 } from 'lucide-react';
 import { useMatchStore } from '@/stores/match-store';
-import type { Match } from '@/types';
+import { db } from '@/db/volleyball-db';
+import type { Match, Rally } from '@/types';
 
 export function MatchOverviewPage() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
-  const { getMatch, addSet } = useMatchStore();
+  const { getMatch, addSet, deleteSet } = useMatchStore();
   const [match, setMatch] = useState<Match | null>(null);
+  const [rallies, setRallies] = useState<Rally[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +23,7 @@ export function MatchOverviewPage() {
       setMatch(m || null);
       setLoading(false);
     });
+    db.rallies.where('matchId').equals(matchId).toArray().then((r) => setRallies(r));
   }, [matchId, getMatch]);
 
   const handleStartSet = async () => {
@@ -35,6 +38,17 @@ export function MatchOverviewPage() {
   const handleContinueSet = (setId: string) => {
     if (!match) return;
     navigate(`/match/${match.id}/set/${setId}/record`);
+  };
+
+  const handleDeleteSet = async (setId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!match) return;
+    if (confirm('确定删除这一局吗？该局所有回合数据都会丢失，此操作不可恢复。')) {
+      await deleteSet(match.id, setId);
+      const updated = await getMatch(match.id);
+      setMatch(updated || null);
+      db.rallies.where('matchId').equals(match.id).toArray().then((r) => setRallies(r));
+    }
   };
 
   if (loading) {
@@ -102,30 +116,43 @@ export function MatchOverviewPage() {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="font-bold text-lg">第 {set.setNumber} 局</span>
-                <span className={`text-sm px-2 py-0.5 rounded-full ${
-                  set.isCompleted
-                    ? 'bg-slate-700 text-slate-400'
-                    : 'bg-emerald-900 text-emerald-300'
-                }`}>
-                  {set.isCompleted ? '已结束' : '进行中'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm px-2 py-0.5 rounded-full ${
+                    set.isCompleted
+                      ? 'bg-slate-700 text-slate-400'
+                      : 'bg-emerald-900 text-emerald-300'
+                  }`}>
+                    {set.isCompleted ? '已结束' : '进行中'}
+                  </span>
+                  <button
+                    onClick={(e) => handleDeleteSet(set.id, e)}
+                    className="touch-target p-1.5 text-slate-500 active:text-red-400 rounded-lg"
+                    title="删除本局"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-4 text-2xl font-bold mb-3">
+              <div className="flex items-center justify-center gap-3 text-2xl font-bold mb-3">
+                <span className="text-xs text-slate-400 font-normal whitespace-nowrap">
+                  暂停{rallies.filter((r) => r.setId === set.id && r.timeout).length}
+                </span>
                 <span>{set.ourScore}</span>
                 <span className="text-slate-500">-</span>
                 <span>{set.opponentScore}</span>
+                <span className="text-xs text-slate-400 font-normal whitespace-nowrap">
+                  换人{rallies.filter((r) => r.setId === set.id && r.hasSubstitution).length}
+                </span>
               </div>
               <div className="flex gap-2">
-                {!set.isCompleted && (
-                  <button
-                    onClick={() => handleContinueSet(set.id)}
-                    className="flex-1 touch-target bg-primary-600 text-white rounded-lg py-2.5
-                      active:bg-primary-700 flex items-center justify-center gap-1.5 text-sm font-semibold"
-                  >
-                    <Play className="w-4 h-4" />
-                    继续记录
-                  </button>
-                )}
+                <button
+                  onClick={() => handleContinueSet(set.id)}
+                  className="flex-1 touch-target bg-primary-600 text-white rounded-lg py-2.5
+                    active:bg-primary-700 flex items-center justify-center gap-1.5 text-sm font-semibold"
+                >
+                  <Play className="w-4 h-4" />
+                  继续记录
+                </button>
                 <button
                   onClick={() => navigate(`/match/${match.id}/set/${set.id}`)}
                   className="flex-1 touch-target bg-slate-700 text-slate-200 rounded-lg py-2.5

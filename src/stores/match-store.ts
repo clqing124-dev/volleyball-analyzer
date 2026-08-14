@@ -24,6 +24,7 @@ interface MatchStore {
   getMatch: (id: string) => Promise<Match | undefined>;
   deleteMatch: (id: string) => Promise<void>;
   addSet: (matchId: string, setNumber: number) => Promise<SetData>;
+  deleteSet: (matchId: string, setId: string) => Promise<void>;
   updateMatch: (id: string, updates: Partial<Match>) => Promise<void>;
 }
 
@@ -122,6 +123,18 @@ export const useMatchStore = create<MatchStore>((set, get) => ({
     }));
 
     return setData;
+  },
+
+  deleteSet: async (matchId, setId) => {
+    await db.sets.delete(setId as any);
+    await db.rallies.where('setId').equals(setId).delete();
+    set((state) => ({
+      matches: state.matches.map((m) =>
+        m.id === matchId
+          ? { ...m, sets: m.sets.filter((s) => s.id !== setId), updatedAt: Date.now() }
+          : m
+      ),
+    }));
   },
 
   updateMatch: async (id, updates) => {

@@ -55,7 +55,8 @@ export interface Rally {
   homeScoreAfter: number;       // 此回合后的我方得分
   awayScoreAfter: number;       // 此回合后的对方得分
   timeout: boolean;             // 该分后是否出现暂停
-  substitutions: Substitution[]; // 该分后是否出现换人
+  hasSubstitution: boolean;     // 该分后是否出现换人
+  substitutions: Substitution[]; // 换人明细（几号换几号）
   timestamp: number;
 }
 

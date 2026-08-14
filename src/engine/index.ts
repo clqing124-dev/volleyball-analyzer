@@ -36,13 +36,16 @@ function receptionRank(q: string): number {
 
 function filterRallies(rallies: Rally[], filters: StatFilters): Rally[] {
   let result = [...rallies];
-  if (filters.minReceptionQuality) {
-    const minRank = receptionRank(filters.minReceptionQuality);
-    result = result.filter((r) => {
-      const rec = r.actions.find((a): a is ReceptionAction => a.type === 'reception');
-      if (!rec) return true; // 没有一传（发球方回合）不筛选
-      return receptionRank(rec.quality) >= minRank;
-    });
+  // 接球/发球维度
+  if (filters.side) {
+    result = result.filter((r) => r.side === filters.side);
+  }
+  // 第几分到第几分维度
+  if (filters.rallyNumberFrom !== undefined) {
+    result = result.filter((r) => r.rallyNumber >= filters.rallyNumberFrom!);
+  }
+  if (filters.rallyNumberTo !== undefined) {
+    result = result.filter((r) => r.rallyNumber <= filters.rallyNumberTo!);
   }
   return result;
 }

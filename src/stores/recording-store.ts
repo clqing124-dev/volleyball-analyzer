@@ -35,7 +35,8 @@ interface RecordingState {
   startRally: (side: RallySide) => void;
   startNextRally: () => void;
   commitAction: (action: RallyAction) => void;
-  finalizeRally: (timeout: boolean, substitutions: Substitution[]) => Promise<void>;
+  finalizeRally: (timeout: boolean, hasSubstitution: boolean, substitutions: Substitution[]) => Promise<void>;
+  updatePendingRally: (timeout: boolean, hasSubstitution: boolean, substitutions: Substitution[]) => void;
   goBack: () => void;
   cancelRally: () => void;
   persistScore: () => Promise<void>;
@@ -108,6 +109,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
         homeScoreAfter: newOurScore,
         awayScoreAfter: newOpponentScore,
         timeout: false,
+        hasSubstitution: false,
         substitutions: [],
         timestamp: Date.now(),
       };
@@ -130,15 +132,25 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     }
   },
 
-  finalizeRally: async (timeout: boolean, substitutions: Substitution[]) => {
+  finalizeRally: async (timeout: boolean, hasSubstitution: boolean, substitutions: Substitution[]) => {
     const state = get();
     if (!state.pendingRally) return;
 
-    const rally: Rally = { ...state.pendingRally, timeout, substitutions };
+    const rally: Rally = { ...state.pendingRally, timeout, hasSubstitution, substitutions };
     try {
       await db.rallies.add(rally);
     } catch (e) {
       console.error('Failed to save rally:', e);
+    }
+
+    // 每结束一个回合就立即把比分写入局记录，确保比分持久化
+    try {
+      await db.sets.update(state.setId as any, {
+        ourScore: rally.homeScoreAfter,
+        opponentScore: rally.awayScoreAfter,
+      });
+    } catch (e) {
+      console.error('Failed to persist score:', e);
     }
 
     set({
@@ -149,6 +161,14 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       ourScore: rally.homeScoreAfter,
       opponentScore: rally.awayScoreAfter,
     });
+  },
+
+  updatePendingRally: (timeout: boolean, hasSubstitution: boolean, substitutions: Substitution[]) => {
+    set((state) => ({
+      pendingRally: state.pendingRally
+        ? { ...state.pendingRally, timeout, hasSubstitution, substitutions }
+        : state.pendingRally,
+    }));
   },
 
   goBack: () => {

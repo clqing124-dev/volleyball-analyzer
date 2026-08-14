@@ -87,5 +87,7 @@ export interface MatchStatistics {
 
 export interface StatFilters {
   playerNumber?: number;
-  minReceptionQuality?: 'in' | 'half' | 'out';
+  side?: 'serving' | 'receiving';  // 接球/发球维度
+  rallyNumberFrom?: number;        // 第几分到第几分（含）
+  rallyNumberTo?: number;          // 第几分到第几分（含）
 }

@@ -23,6 +23,7 @@ export function MatchStatsPage() {
   const [stats, setStats] = useState<MatchStatistics | null>(null);
   const [filterPlayer, setFilterPlayer] = useState<number | undefined>();
   const [selectedSet, setSelectedSet] = useState<string>('all');
+  const [filterSide, setFilterSide] = useState<'serving' | 'receiving' | undefined>();
   const [activeTab, setActiveTab] = useState<string>('serve');
 
   useEffect(() => {
@@ -37,9 +38,10 @@ export function MatchStatsPage() {
       if (selectedSet !== 'all') filtered = rallies.filter((r) => r.setId === selectedSet);
       const filters: StatFilters = {};
       if (filterPlayer) filters.playerNumber = filterPlayer;
+      if (filterSide) filters.side = filterSide;
       setStats(computeMatchStatistics(filtered, match.type, filters));
     }
-  }, [rallies, match, filterPlayer, selectedSet]);
+  }, [rallies, match, filterPlayer, selectedSet, filterSide]);
 
   if (!match || !stats) {
     return <div className="flex items-center justify-center h-full text-slate-400">加载中...</div>;
@@ -80,6 +82,12 @@ export function MatchStatsPage() {
             ))}
           </select>
         )}
+        <select value={filterSide || ''} onChange={(e) => setFilterSide((e.target.value || undefined) as any)}
+          className="bg-slate-800 rounded-lg px-3 py-2 text-sm text-white outline-none">
+          <option value="">接球/发球</option>
+          <option value="serving">发球方</option>
+          <option value="receiving">接球方</option>
+        </select>
       </div>
 
       <div className="px-4 pb-2">

@@ -173,11 +173,12 @@ function RallyStartPanel({ nextSide, onStart }: { nextSide: RallySide | null; on
   );
 }
 
-function RallyCompletePanel({ outcome, score, players, onFinalize, onBack }: {
+function RallyCompletePanel({ outcome, score, players, onFinalize, onUpdate, onBack }: {
   outcome: 'our_score' | 'their_score';
   score: { our: number; their: number };
   players: number[];
-  onFinalize: (timeout: boolean, subs: Substitution[]) => void;
+  onFinalize: (timeout: boolean, hasSubstitution: boolean, subs: Substitution[]) => void;
+  onUpdate: (timeout: boolean, hasSubstitution: boolean, subs: Substitution[]) => void;
   onBack: () => void;
 }) {
   const [timeoutOn, setTimeoutOn] = useState(false);
@@ -185,6 +186,11 @@ function RallyCompletePanel({ outcome, score, players, onFinalize, onBack }: {
   const [subs, setSubs] = useState<Substitution[]>([]);
   const [subIn, setSubIn] = useState<number | null>(null);
   const [subOut, setSubOut] = useState<number | null>(null);
+
+  // 实时同步暂停/换人到 store，让顶部数字立即更新
+  useEffect(() => {
+    onUpdate(timeoutOn, subOn, subs);
+  }, [timeoutOn, subOn, subs]);
 
   const addSub = () => {
     if (subIn && subOut) {
@@ -251,7 +257,7 @@ function RallyCompletePanel({ outcome, score, players, onFinalize, onBack }: {
         </div>
       )}
 
-      <button onClick={() => onFinalize(timeoutOn, subs)}
+      <button onClick={() => onFinalize(timeoutOn, subOn, subs)}
         className="w-full touch-target bg-primary-600 text-white font-bold text-lg rounded-xl py-4 active:bg-primary-700">
         下一回合
       </button>
@@ -540,6 +546,10 @@ export function SetRecordingPage() {
   const attackNumber = currentSide === 'serving' ? attackCount + 2 : attackCount + 1;
   const canBack = pendingActions.length > 0 || currentStep === 'rally_complete';
 
+  // 暂停/换人次数（含当前待完成回合的实时选择）
+  const timeoutCount = completedRallies.filter((r) => r.timeout).length + (pendingRally?.timeout ? 1 : 0);
+  const substitutionCount = completedRallies.filter((r) => r.hasSubstitution).length + (pendingRally?.hasSubstitution ? 1 : 0);
+
   const renderStep = () => {
     if (!currentStep) {
       return <RallyStartPanel nextSide={nextSide} onStart={(side) => store.startRally(side)} />;
@@ -551,7 +561,8 @@ export function SetRecordingPage() {
           outcome={pendingRally.outcome}
           score={{ our: pendingRally.homeScoreAfter, their: pendingRally.awayScoreAfter }}
           players={_playerNumbers}
-          onFinalize={(t, s) => store.finalizeRally(t, s)}
+          onFinalize={(t, hs, s) => store.finalizeRally(t, hs, s)}
+          onUpdate={(t, hs, s) => store.updatePendingRally(t, hs, s)}
           onBack={() => store.goBack()}
         />
       );
@@ -596,10 +607,12 @@ export function SetRecordingPage() {
             </span>
             <span className="truncate max-w-[120px]">{match.homeTeamName}</span>
           </div>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-xs text-slate-400 whitespace-nowrap">暂停{timeoutCount}</span>
             <span className="text-2xl font-black">{ourScore}</span>
             <span className="text-sm text-slate-400">第{setNumber}局 · {completedRallies.length}分</span>
             <span className="text-2xl font-black">{opponentScore}</span>
+            <span className="text-xs text-slate-400 whitespace-nowrap">换人{substitutionCount}</span>
           </div>
         </div>
       </div>
