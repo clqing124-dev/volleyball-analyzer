@@ -24,7 +24,7 @@ export type ServeResult = 'in_position' | 'half_in_position' | 'out_of_position'
 export type ReceptionQuality = 'in' | 'half' | 'out' | 'concede' | 'opponent_error' | 'direct_score' | 'to_opponent';
 // 到位 / 半到位 / 不到位 / 丢分 / 对方失误 / 直接得分 / 接到对面
 
-export type SetQuality = 'in' | 'half' | 'out' | 'concede' | 'score';
+export type SetQuality = 'in' | 'half' | 'out' | 'concede' | 'score' | 'second';
 // 到位 / 半到位 / 不到位 / 丢分 / 得分
 
 export type TouchQuality = 'in' | 'half' | 'out' | 'concede' | 'score' | 'over_net';
@@ -149,6 +149,7 @@ export const SET_QUALITY_LABELS: Record<SetQuality, string> = {
   out: '不到位',
   concede: '丢分',
   score: '得分',
+  second: '二次',
 };
 
 export const TOUCH_QUALITY_LABELS: Record<TouchQuality, string> = {
