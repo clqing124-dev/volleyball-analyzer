@@ -24,6 +24,8 @@ export function MatchStatsPage() {
   const [filterPlayer, setFilterPlayer] = useState<number | undefined>();
   const [selectedSet, setSelectedSet] = useState<string>('all');
   const [filterSide, setFilterSide] = useState<'serving' | 'receiving' | undefined>();
+  const [filterAttackLine, setFilterAttackLine] = useState<string | undefined>();
+  const [filterAttackType, setFilterAttackType] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState<string>('serve');
 
   useEffect(() => {
@@ -39,9 +41,11 @@ export function MatchStatsPage() {
       const filters: StatFilters = {};
       if (filterPlayer) filters.playerNumber = filterPlayer;
       if (filterSide) filters.side = filterSide;
+      if (filterAttackLine) filters.attackLine = filterAttackLine;
+      if (filterAttackType) filters.attackType = filterAttackType;
       setStats(computeMatchStatistics(filtered, match.type, filters));
     }
-  }, [rallies, match, filterPlayer, selectedSet, filterSide]);
+  }, [rallies, match, filterPlayer, selectedSet, filterSide, filterAttackLine, filterAttackType]);
 
   if (!match || !stats) {
     return <div className="flex items-center justify-center h-full text-slate-400">加载中...</div>;
@@ -87,6 +91,24 @@ export function MatchStatsPage() {
           <option value="">接球/发球</option>
           <option value="serving">发球方</option>
           <option value="receiving">接球方</option>
+        </select>
+        <select value={filterAttackLine || ''} onChange={(e) => setFilterAttackLine(e.target.value || undefined)}
+          className="bg-slate-800 rounded-lg px-3 py-2 text-sm text-white outline-none">
+          <option value="">进攻线路</option>
+          <option value="middle">中线</option>
+          <option value="cross">大斜线</option>
+          <option value="big_cross">二直线</option>
+          <option value="small_cross">小斜线</option>
+          <option value="second_straight">腰线</option>
+          <option value="straight">直线</option>
+        </select>
+        <select value={filterAttackType || ''} onChange={(e) => setFilterAttackType(e.target.value || undefined)}
+          className="bg-slate-800 rounded-lg px-3 py-2 text-sm text-white outline-none">
+          <option value="">进攻方式</option>
+          <option value="attack">进攻</option>
+          <option value="tip">吊球</option>
+          <option value="handle">处理</option>
+          <option value="recover">回收</option>
         </select>
       </div>
 

@@ -44,7 +44,8 @@ export type AttackResult = 'error' | 'blocked_kill' | 'score' | 'blocked_back' |
 
 export type BlockEffect =
   | 'block_kill' | 'effective_touch' | 'destructive' | 'no_effective_touch'
-  | 'no_block_formed' | 'block_out' | 'net_touch' | 'none';
+  | 'no_block_formed' | 'block_out' | 'net_touch' | 'blocked_back' | 'opponent_error' | 'none';
+// 拦死 / 有效撑起 / 破坏性拦网 / 未有效触球 / 未形成并拦 / 打手出界 / 触网 / 拦回 / 对方失误 / 无(进攻拦回/处理)
 // 拦死 / 有效撑起 / 破坏性拦网 / 未有效触球 / 未形成并拦 / 打手出界 / 触网 / 无(进攻拦回/处理)
 
 export type TransitionResult = 'form_attack' | 'handle' | 'score' | 'concede';
@@ -192,6 +193,8 @@ export const BLOCK_EFFECT_LABELS: Record<BlockEffect, string> = {
   no_block_formed: '未形成并拦',
   block_out: '打手出界',
   net_touch: '触网',
+  blocked_back: '拦回',
+  opponent_error: '对方失误',
   none: '无（进攻拦回/处理）',
 };
 

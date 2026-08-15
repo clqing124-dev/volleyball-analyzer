@@ -90,4 +90,6 @@ export interface StatFilters {
   side?: 'serving' | 'receiving';  // 接球/发球维度
   rallyNumberFrom?: number;        // 第几分到第几分（含）
   rallyNumberTo?: number;          // 第几分到第几分（含）
+  attackLine?: string;             // 进攻线路维度
+  attackType?: string;             // 进攻方式维度
 }

@@ -65,6 +65,18 @@ function filterActionsByPlayer(actions: RallyAction[], playerNumber?: number): R
   });
 }
 
+// 进攻线路/进攻方式维度：只过滤进攻动作，其他动作保留
+function filterActionsByAttack(actions: RallyAction[], filters: StatFilters): RallyAction[] {
+  let result = actions;
+  if (filters.attackLine) {
+    result = result.filter((a) => a.type !== 'attack' || (a as AttackAction).attackLine === filters.attackLine);
+  }
+  if (filters.attackType) {
+    result = result.filter((a) => a.type !== 'attack' || (a as AttackAction).attackType === filters.attackType);
+  }
+  return result;
+}
+
 // ============================================================
 // 计算函数
 // ============================================================
@@ -286,7 +298,10 @@ export function computeMatchStatistics(
 ): MatchStatistics {
   const filtered = filterRallies(rallies, filters || {});
   const allActions = filtered.flatMap((r) => r.actions);
-  const filteredActions = filterActionsByPlayer(allActions, filters?.playerNumber);
+  const filteredActions = filterActionsByAttack(
+    filterActionsByPlayer(allActions, filters?.playerNumber),
+    filters || {},
+  );
 
   return {
     serve: computeServeStats(filteredActions),
